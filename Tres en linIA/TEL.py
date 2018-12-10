@@ -27,16 +27,7 @@ class Tablero:
 		else:
 			return False
 
-jugador1 = Jugador("Juan")
-jugador2 = Jugador("Pedro")
-
-#Inicializando datos necesarios para mi red neuronal
-score = {"win": 0, "loose": 0}
-data_X = []
-data_Y = []
-predict = modelo.predict_proba([str_to_list(player1)])[0]
-clf = MLPClassifier(verbose=False, warm_start=True) #En este caso, perceptron multicapa
-
+#Acciones que pueden realizar los diversos
 
 def decidir(jugador1, jugador2, tablero, debug=False):
 	
@@ -99,107 +90,40 @@ def jugar(jugador1, jugador2):
 			else: print("ha ganado " + ganador.nombre + " con la jugada " + ganador.estadoActual)
 			sinFinalizar = False
 
+jugador1 = Jugador("Juan")
+jugador2 = Jugador("Pedro")
+
+#Inicializando datos necesarios para mi red neuronal
+score = {"win": 0, "loose": 0}
+#Creamos los input necesarios para que se produzca una victoria por parte de algun jugador (de izq a der)
+victoria1 = [1, 1, 1, 0, 0, 0, 0, 0, 0]
+victoria2 = [0, 0, 0, 1, 1, 1, 0, 0, 0]
+victoria3 = [0, 0, 0, 0, 0, 0, 1, 1, 1]
+victoria4 = [1, 0, 0, 1, 0, 0, 1, 0, 0]
+victoria5 = [0, 1, 0, 0, 1, 0, 0, 1, 0]
+victoria6 = [0, 0, 1, 0, 0, 1, 0, 0, 1]
+victoria7 = [1, 0, 0, 0, 1, 0, 0, 0, 1]
+victoria8 = [0, 0, 1, 0, 1, 0, 1, 0, 0]
+novictoria1 = [0, 0, 1, 0, 0, 0, 0, 0, 0]
+novictoria2 = [0, 0, 0, 1, 0, 1, 0, 0, 0]
+#Data de entrenamiento
+data_X = []
+data_X.append(victoria1)
+data_X.append(victoria2)
+data_X.append(victoria3)
+data_X.append(victoria4)
+data_X.append(victoria5)
+data_X.append(victoria6)
+data_X.append(victoria7)
+data_X.append(victoria8)
+data_X.append(novictoria1)
+data_X.append(novictoria2)
+
+data_X = [victoria1, victoria2, victoria3, victoria4, victoria5, victoria6, victoria7, victoria8, novictoria1, novictoria2]
+data_Y = [1, 1, 1, 1, 1, 1, 1, 1, 0, 0] #1=Ganador , 0=No ganador
+
+redNeuronal = MLPClassifier(hidden_layer_sizes=(10), verbose=False) #En este caso, perceptron multicapa
+
+redNeuronal.fit(data_X, data_Y) #Entrenando la red por primera vez
+
 jugar(jugador1, jugador2)
-
-
-
-#respuesta = comprobarVictoria(jugador, jugador2)
-#print(respuesta)
-
-
-#search_winner("papel", "tijera") // devuelve 2
-
-
-"""
-
-
-test = [
-	["piedra", "piedra", 0],
-	["piedra", "tijera", 1],
-	["piedra", "papel", 2]
-]
-
-def get_choice():
-	return choice(options)
-
-def str_to_list(option):
-	if option=="piedra":
-		res = [1, 0, 0]
-	elif option=="papel":
-		res = [0, 1, 0]
-	else:
-		res = [0, 0, 1]
-	return res
-
-data_X = list(map(str_to_list, ["piedra", "tijera", "papel"]))
-data_Y = list(map(str_to_list, ["papel", "piedra", "tijera"]))
-
-clf = MLPClassifier(verbose=False, warm_start=True)
-
-modelo = clf.fit([data_X[0]], [data_Y[0]]) #Se entrena con un solo resultado (Si el otro elige piedra, debe elegir papel)
-
-def play_and_learn(iters=10, debug=False):
-	score = {"win": 0, "loose": 0}
-	data_X = []
-	data_Y = []
-
-	for i in range(iters):
-		player1 = get_choice()
-		predict = modelo.predict_proba([str_to_list(player1)])[0]
-		
-		if predict[0] >= 0.95:
-			player2 = options[0]
-		elif predict[1] >= 0.95:
-			player2 = options[1]
-		elif predict[2] >= 0.95:
-			player2 = options[2]
-		else:
-			player2 = get_choice()
-
-		if debug==True:
-			print("Jugador1: "+player1+ ", Jugador2 (modelo): " +str(predict)+ " -----> " +player2)
-
-		winner = search_winner(player1, player2)
-		if debug==True:
-			print("Comprobamos: player1 VS player2: " +str(winner))
-
-		if winner==2:
-			data_X.append(str_to_list(player1))
-			data_Y.append(str_to_list(player2))
-			score["win"]+=1
-		else:
-			score["loose"]+=1
-
-	return score, data_X, data_Y
-
-#score, data_X, data_Y = play_and_learn(1, debug=True)
-#print(data_X)
-#print(data_Y)
-#print("Score: " +str(score))
-#if len(data_X):
-#	modelo = modelo.partial_fit(data_X, data_Y)
-
-i = 0
-historic_pct = []
-while True:
-	i+=1
-	score, data_X, data_Y = play_and_learn(iters=1000, debug=False)
-	pct = (score["win"]*100/(score["win"]+score["loose"]))
-	historic_pct.append(pct)
-	print("Iteracion: "+str(i)+" - Score: " +str(score)+ ", %" +str(pct))
-
-	if len(data_X):
-		modelo = modelo.partial_fit(data_X, data_Y)
-
-	if sum(historic_pct[-9:])==900: #Ultimos 9 valores
-		break
-
-#Ejemplo de partidas random con ganadores en cada caso
-
-#for i in range (10):
-#	jugador1 = get_choice()
-#	jugador2 = get_choice()
-#	print ("jugador1: " +jugador1+ ", jugador2: " +jugador2+ ", ganador: " + str(search_winner(jugador1, jugador2)))  
-
-
-"""
